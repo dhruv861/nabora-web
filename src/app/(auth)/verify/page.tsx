@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { createOtpClient } from '@/lib/auth/otp-factory';
@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 
 const OTP_LENGTH = 6;
 
-export default function VerifyPage() {
+function VerifyComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const phone = searchParams.get('phone') ?? '';
@@ -210,5 +210,17 @@ export default function VerifyPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-primary-500)] border-t-transparent" />
+      </div>
+    }>
+      <VerifyComponent />
+    </Suspense>
   );
 }
