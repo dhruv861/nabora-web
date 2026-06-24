@@ -1,37 +1,23 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useQueryClient } from '@tanstack/react-query';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/v1', '') ?? 'http://localhost:3000';
+const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/v1').replace('/v1', '');
 
 let globalSocket: Socket | null = null;
 
-/**
- * useChatSocket
- *
- * Maintains a singleton Socket.IO connection authenticated with the JWT token.
- * Handles:
- *  - Connect/disconnect lifecycle tied to auth state
- *  - Joining a specific chat room by chatId
- *  - Listening for new_message events and updating TanStack Query cache
- *  - Listening for message_read events
- *  - Broadcasting notification events to invalidate notification queries
- */
 export function useChatSocket(chatId?: string) {
   const { token, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const joinedRoom = useRef<string | null>(null);
 
-  // ── Connect / disconnect ─────────────────────────────────────────
+  // ── Connect / disconnect ───────────────────────────────────────────────
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      if (globalSocket?.connected) {
-        globalSocket.disconnect();
-        globalSocket = null;
-      }
+      if (globalSocket?.connected) { globalSocket.disconnect(); globalSocket = null; }
       return;
     }
 
@@ -47,36 +33,31 @@ export function useChatSocket(chatId?: string) {
 
     const socket = globalSocket;
 
-    socket.on('notification', () => {
+    // Notification push — invalidate query so bell badge updates
+    const handleNotification = () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    });
-
-    return () => {
-      socket.off('notification');
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
+      queryClient.invalidateQueries({ queryKey: ['my-chats'] });
     };
+    socket.on('notification', handleNotification);
+
+    return () => { socket.off('notification', handleNotification); };
   }, [isAuthenticated, token, queryClient]);
 
-  // ── Join/leave chat room + listen for messages ────────────────────
+  // ── Join/leave chat room ─────────────────────────────────────────────
   useEffect(() => {
     if (!chatId || !globalSocket) return;
-
     const socket = globalSocket;
 
-    // Join the chat room
     socket.emit('join_chat', { chatId });
     joinedRoom.current = chatId;
 
     const handleNewMessage = (message: any) => {
-      // Prepend message to the query cache for this chat
       queryClient.setQueryData(['chat-messages', chatId], (old: any) => {
         if (!old) return old;
-        // Avoid duplicates (e.g. our own optimistic message already applied)
         const pages = old.pages as any[];
-        const alreadyExists = pages.some((page: any) =>
-          page.data?.some((m: any) => m.id === message.id)
-        );
+        const alreadyExists = pages.some((page: any) => page.data?.some((m: any) => m.id === message.id));
         if (alreadyExists) return old;
-        // Append to last page
         return {
           ...old,
           pages: pages.map((page: any, idx: number) =>
@@ -86,7 +67,6 @@ export function useChatSocket(chatId?: string) {
           ),
         };
       });
-      // Also refresh chat list unread state
       queryClient.invalidateQueries({ queryKey: ['my-chats'] });
     };
 
@@ -95,21 +75,26 @@ export function useChatSocket(chatId?: string) {
       queryClient.invalidateQueries({ queryKey: ['my-chats'] });
     };
 
+    // Relay typing to the page via a custom DOM event (avoids prop drilling)
+    const handleTyping = (data: { userId: string; chatId: string }) => {
+      window.dispatchEvent(new CustomEvent('nabora:user_typing', { detail: data }));
+    };
+
     socket.on('new_message', handleNewMessage);
     socket.on('message_read', handleMessageRead);
+    socket.on('user_typing', handleTyping);
 
     return () => {
       socket.emit('leave_chat', { chatId });
       socket.off('new_message', handleNewMessage);
       socket.off('message_read', handleMessageRead);
+      socket.off('user_typing', handleTyping);
       joinedRoom.current = null;
     };
   }, [chatId, queryClient]);
 
   const sendTyping = useCallback(() => {
-    if (chatId && globalSocket?.connected) {
-      globalSocket.emit('typing', { chatId });
-    }
+    if (chatId && globalSocket?.connected) globalSocket.emit('typing', { chatId });
   }, [chatId]);
 
   return { sendTyping, isConnected: globalSocket?.connected ?? false };
