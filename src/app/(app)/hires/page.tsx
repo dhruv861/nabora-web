@@ -86,7 +86,6 @@ export default function HiresDashboardPage() {
           ))}
         </div>
 
-        {/* Status filter chips */}
         <div className="flex gap-1 pb-2 overflow-x-auto">
           {STATUS_FILTERS.map((f) => (
             <button
@@ -153,7 +152,6 @@ export default function HiresDashboardPage() {
                   </div>
                 </div>
 
-                {/* Action row */}
                 <div className="flex gap-2 border-t border-[var(--color-neutral-100)] pt-3">
                   <button
                     onClick={() => router.push(`/hires/${hire.id}`)}
@@ -162,13 +160,24 @@ export default function HiresDashboardPage() {
                     View Details
                   </button>
 
-                  <button
-                    disabled
-                    title="Available in next update"
-                    className="p-2 border border-[var(--color-neutral-200)] rounded-xl text-[var(--color-neutral-300)] cursor-not-allowed"
-                  >
-                    <MessageCircle size={16} />
-                  </button>
+                  {/* Chat button — enabled in Sprint 4 */}
+                  {hire.chat?.id ? (
+                    <button
+                      onClick={() => router.push(`/chats/${hire.chat.id}`)}
+                      className="p-2 border border-[var(--color-primary-200)] rounded-xl text-[var(--color-primary-600)] hover:bg-[var(--color-primary-50)] transition"
+                      title="Open chat"
+                    >
+                      <MessageCircle size={16} />
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      title="Chat not yet available"
+                      className="p-2 border border-[var(--color-neutral-200)] rounded-xl text-[var(--color-neutral-300)] cursor-not-allowed"
+                    >
+                      <MessageCircle size={16} />
+                    </button>
+                  )}
 
                   {isEmployer && hire.status === 'ACTIVE' && (
                     confirmComplete === hire.id ? (

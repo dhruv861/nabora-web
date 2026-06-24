@@ -10,7 +10,7 @@ import { Avatar } from '@/components/Avatar';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadingState } from '@/components/LoadingState';
 import { Button } from '@/components/Button';
-import { ArrowLeft, Briefcase, CalendarDays, MessageCircle, FileText, Clock } from 'lucide-react';
+import { ArrowLeft, CalendarDays, MessageCircle, FileText, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function HireDetailPage() {
@@ -58,6 +58,7 @@ export default function HireDetailPage() {
 
   const isEmployer = user?.id === hire.employerId;
   const counterparty = isEmployer ? hire.worker : hire.employer;
+  const chatId = hire.chat?.id;
 
   const sectionClass = 'bg-white rounded-3xl border border-[var(--color-neutral-200)] p-4 shadow-sm flex flex-col gap-3';
   const labelClass = 'text-[10px] font-bold text-[var(--color-neutral-400)] uppercase tracking-wider';
@@ -90,9 +91,7 @@ export default function HireDetailPage() {
                 {new Date(hire.job.workDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             )}
-            {hire.job?.area && (
-              <span>{hire.job.area}</span>
-            )}
+            {hire.job?.area && <span>{hire.job.area}</span>}
           </div>
         </div>
 
@@ -138,7 +137,7 @@ export default function HireDetailPage() {
           )}
         </div>
 
-        {/* Attendance — coming Sprint 7 */}
+        {/* Attendance — Sprint 5 */}
         <div className={sectionClass}>
           <p className={labelClass}>Attendance</p>
           {hire.attendance && hire.attendance.length > 0 ? (
@@ -148,7 +147,7 @@ export default function HireDetailPage() {
           )}
         </div>
 
-        {/* Invoice — coming Sprint 7 */}
+        {/* Invoice — Sprint 7 */}
         <div className={sectionClass}>
           <p className={labelClass}>Invoice</p>
           {hire.invoice ? (
@@ -169,14 +168,23 @@ export default function HireDetailPage() {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button
-            disabled
-            title="Available in next update"
-            className="flex-1 py-3 flex items-center justify-center gap-2 border border-[var(--color-neutral-200)] rounded-xl text-sm font-bold text-[var(--color-neutral-300)] cursor-not-allowed"
-          >
-            <MessageCircle size={16} />
-            Chat
-          </button>
+          {chatId ? (
+            <button
+              onClick={() => router.push(`/chats/${chatId}`)}
+              className="flex-1 py-3 flex items-center justify-center gap-2 border border-[var(--color-primary-300)] bg-[var(--color-primary-50)] rounded-xl text-sm font-bold text-[var(--color-primary-700)] hover:bg-[var(--color-primary-100)] transition"
+            >
+              <MessageCircle size={16} />
+              Open Chat
+            </button>
+          ) : (
+            <button
+              disabled
+              className="flex-1 py-3 flex items-center justify-center gap-2 border border-[var(--color-neutral-200)] rounded-xl text-sm font-bold text-[var(--color-neutral-300)] cursor-not-allowed"
+            >
+              <MessageCircle size={16} />
+              Chat
+            </button>
+          )}
 
           {isEmployer && hire.status === 'ACTIVE' && (
             confirmComplete ? (
