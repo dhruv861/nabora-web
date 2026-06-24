@@ -15,7 +15,6 @@ export default function MyJobsPage() {
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
 
-  // Fetch employer's jobs
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['my-jobs', selectedStatus],
     queryFn: async () => {
@@ -25,7 +24,6 @@ export default function MyJobsPage() {
     },
   });
 
-  // Publish Mutation
   const publishMutation = useMutation({
     mutationFn: async (jobId: string) => {
       await api.post(`/jobs/${jobId}/publish`);
@@ -44,24 +42,9 @@ export default function MyJobsPage() {
     },
   });
 
-  // Close/Deactivate Job Mutation
   const closeMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      // In MVP, we can PATCH/DELETE status to CLOSED or similar
-      // TDD: PATCH /v1/jobs/:id updates job. In NestJS JobsService, update only edits DRAFT.
-      // Wait, is there a close endpoint? Let's check JobsService in nabora-api.
-      // It has `remove(id)` which sets status to DELETED.
-      // Let's use soft delete or close if implemented, otherwise simulated.
-      try {
-        await api.delete(`/jobs/${jobId}`);
-      } catch (err: any) {
-        if (err.response?.status === 404) {
-          // Fallback simulation
-          localStorage.setItem(`mock-closed-${jobId}`, 'true');
-        } else {
-          throw err;
-        }
-      }
+      await api.delete(`/jobs/${jobId}`);
     },
     onSuccess: () => {
       toast.success('Job closed successfully.');
@@ -74,7 +57,6 @@ export default function MyJobsPage() {
 
   return (
     <div className="min-h-screen pb-safe bg-[var(--color-neutral-50)] flex flex-col">
-      {/* Header */}
       <header className="sticky top-0 bg-white border-b border-[var(--color-neutral-200)] shadow-sm z-20 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -85,7 +67,6 @@ export default function MyJobsPage() {
           </button>
           <span className="font-bold text-sm text-[var(--color-neutral-800)]">Manage Jobs</span>
         </div>
-
         <Button
           onClick={() => router.push('/jobs/create')}
           size="sm"
@@ -96,7 +77,6 @@ export default function MyJobsPage() {
         </Button>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-2xl mx-auto w-full px-4 py-6 flex-1 flex flex-col gap-5">
         {/* Status Tabs */}
         <div className="flex bg-white border border-[var(--color-neutral-200)] p-1 rounded-2xl">
@@ -156,8 +136,11 @@ export default function MyJobsPage() {
                     <StatusBadge status={job.status} />
                   </div>
 
-                  {/* Openings / Applications counters */}
-                  <div className="flex items-center gap-4 bg-[var(--color-neutral-50)] rounded-2xl p-2.5 border border-[var(--color-neutral-150)]">
+                  {/* Counters */}
+                  <button
+                    onClick={() => isPublished ? router.push(`/jobs/${job.id}/applicants`) : undefined}
+                    className={`flex items-center gap-4 bg-[var(--color-neutral-50)] rounded-2xl p-2.5 border border-[var(--color-neutral-150)] text-left w-full ${isPublished ? 'hover:bg-[var(--color-neutral-100)] transition cursor-pointer' : 'cursor-default'}`}
+                  >
                     <div className="flex items-center gap-1.5 text-xs text-[var(--color-neutral-600)]">
                       <Users size={14} className="text-[var(--color-neutral-400)]" />
                       <span>
@@ -168,9 +151,12 @@ export default function MyJobsPage() {
                       <Users size={14} className="text-[var(--color-neutral-400)]" />
                       <span>
                         <span className="font-bold text-[var(--color-neutral-800)]">{applicationsCount}</span> applicants
+                        {isPublished && applicationsCount > 0 && (
+                          <span className="ml-1 text-[var(--color-primary-500)]">→</span>
+                        )}
                       </span>
                     </div>
-                  </div>
+                  </button>
 
                   {/* Actions Bar */}
                   <div className="flex items-center gap-2 border-t border-[var(--color-neutral-100)] pt-3 mt-1">
@@ -203,19 +189,24 @@ export default function MyJobsPage() {
                     {isPublished && (
                       <>
                         <button
+                          onClick={() => router.push(`/jobs/${job.id}/applicants`)}
+                          className="flex-1 py-2 bg-[var(--color-primary-500)] text-white hover:bg-[var(--color-primary-600)] text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5"
+                        >
+                          <Users size={14} />
+                          View Applicants
+                        </button>
+                        <button
                           onClick={() => router.push(`/jobs/${job.citySlug}/${job.categorySlug}/${job.slug}`)}
-                          className="flex-1 py-2 border border-[var(--color-neutral-200)] text-[var(--color-neutral-700)] hover:bg-[var(--color-neutral-50)] text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5"
+                          className="px-3 py-2 border border-[var(--color-neutral-200)] text-[var(--color-neutral-700)] hover:bg-[var(--color-neutral-50)] text-xs font-bold rounded-xl transition flex items-center gap-1.5"
                         >
                           <Eye size={14} />
-                          View Listing
                         </button>
                         <button
                           onClick={() => closeMutation.mutate(job.id)}
                           disabled={closeMutation.isPending}
-                          className="px-4 py-2 border border-[var(--color-error-500)] text-[var(--color-error-600)] hover:bg-[var(--color-error-50)] text-xs font-bold rounded-xl transition flex items-center gap-1.5"
+                          className="px-3 py-2 border border-[var(--color-error-500)] text-[var(--color-error-600)] hover:bg-[var(--color-error-50)] text-xs font-bold rounded-xl transition flex items-center gap-1.5"
                         >
                           <XCircle size={14} />
-                          Close
                         </button>
                       </>
                     )}
