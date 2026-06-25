@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LoadingState } from '@/components/LoadingState';
 import { EmptyState } from '@/components/EmptyState';
-import { Avatar } from '@/components/Avatar';
+import { EventCard } from '@/components/EventCard';
 import { ArrowLeft, Briefcase, CalendarDays, Users, FileText, Plus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/Button';
 
@@ -22,15 +22,32 @@ export default function OrgDashboardPage() {
     queryFn: async () => { const res = await api.get(`/organizations/${orgId}`); return res.data.data as any; },
   });
 
+  const { data: eventsData } = useQuery({
+    queryKey: ['org-events-upcoming', orgId],
+    queryFn: async () => {
+      const res = await api.get(`/organizations/${orgId}/events`, { params: { status: 'PUBLISHED', limit: '3' } });
+      return res.data.data as { data: any[] };
+    },
+    enabled: !!orgId,
+  });
+
+  const { data: members } = useQuery({
+    queryKey: ['org-members', orgId],
+    queryFn: async () => { const res = await api.get(`/organizations/${orgId}/members`); return res.data.data as any[]; },
+  });
+  const myRole = members?.find((m: any) => m.user?.id === user?.id)?.role ?? '';
+
   if (isLoading) return <LoadingState />;
   if (error || !org) return <EmptyState title="Organization not found" description="" action={{ label: 'Back', onClick: () => router.push('/profile') }} />;
 
   const stats = [
-    { label: 'Active Jobs', value: org._count?.jobs ?? 0, icon: <Briefcase size={18} /> },
-    { label: 'Events', value: org._count?.events ?? 0, icon: <CalendarDays size={18} /> },
-    { label: 'Team', value: org._count?.members ?? 0, icon: <Users size={18} /> },
-    { label: 'Invoices', value: '—', icon: <FileText size={18} /> },
+    { label: 'Active Jobs', value: org._count?.jobs ?? 0, icon: <Briefcase size={18} />, onClick: () => router.push(`/jobs/my`) },
+    { label: 'Events', value: org._count?.events ?? 0, icon: <CalendarDays size={18} />, onClick: () => router.push(`/organizations/${orgId}/events`) },
+    { label: 'Team', value: org._count?.members ?? 0, icon: <Users size={18} />, onClick: () => router.push(`/organizations/${orgId}/members`) },
+    { label: 'Invoices', value: '—', icon: <FileText size={18} />, onClick: undefined },
   ];
+
+  const upcomingEvents = eventsData?.data ?? [];
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-50)] flex flex-col">
@@ -55,47 +72,63 @@ export default function OrgDashboardPage() {
               {org.isVerified && <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">✓ Verified</span>}
             </div>
             {org.city && <p className="text-xs text-[var(--color-neutral-500)] mt-0.5">{org.city}</p>}
-            {org.description && <p className="text-xs text-[var(--color-neutral-400)] mt-1 truncate">{org.description}</p>}
           </div>
         </div>
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
           {stats.map((s) => (
-            <div key={s.label} className="bg-white rounded-2xl border border-[var(--color-neutral-200)] p-4 shadow-sm flex items-center gap-3">
+            <button
+              key={s.label}
+              onClick={s.onClick}
+              disabled={!s.onClick}
+              className={`bg-white rounded-2xl border border-[var(--color-neutral-200)] p-4 shadow-sm flex items-center gap-3 text-left ${
+                s.onClick ? 'hover:bg-[var(--color-neutral-50)] transition cursor-pointer' : 'cursor-default'
+              }`}
+            >
               <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-50)] flex items-center justify-center text-[var(--color-primary-500)]">{s.icon}</div>
               <div>
                 <p className="text-xl font-extrabold text-[var(--color-neutral-900)]">{s.value}</p>
                 <p className="text-[10px] text-[var(--color-neutral-500)] font-semibold">{s.label}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-3xl border border-[var(--color-neutral-200)] p-4 shadow-sm flex flex-col gap-2">
+        <div className="bg-white rounded-3xl border border-[var(--color-neutral-200)] p-4 shadow-sm flex flex-col gap-1">
           <p className="text-xs font-bold text-[var(--color-neutral-500)] uppercase tracking-wider mb-1">Quick Actions</p>
           {[
             { label: '+ Post a Job', icon: <Briefcase size={16} />, onClick: () => router.push(`/jobs/create?orgId=${orgId}`) },
-            { label: '+ Create Event', icon: <CalendarDays size={16} />, onClick: () => router.push(`/organizations/${orgId}/events/create`), disabled: true, hint: 'Coming in Sprint 6' },
+            { label: '+ Create Event', icon: <CalendarDays size={16} />, onClick: () => router.push(`/organizations/${orgId}/events/create`) },
             { label: '+ Invite Member', icon: <UserPlus size={16} />, onClick: () => router.push(`/organizations/${orgId}/members`) },
           ].map((a) => (
             <button
               key={a.label}
               onClick={a.onClick}
-              disabled={a.disabled}
-              title={a.hint}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-left transition ${
-                a.disabled
-                  ? 'text-[var(--color-neutral-300)] cursor-not-allowed'
-                  : 'text-[var(--color-primary-600)] hover:bg-[var(--color-primary-50)]'
-              }`}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-left text-[var(--color-primary-600)] hover:bg-[var(--color-primary-50)] transition"
             >
-              {a.icon}
-              {a.label}
-              {a.hint && <span className="ml-auto text-[10px] font-normal text-[var(--color-neutral-400)]">{a.hint}</span>}
+              {a.icon}{a.label}
             </button>
           ))}
+        </div>
+
+        {/* Upcoming events */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-[var(--color-neutral-500)] uppercase tracking-wider">Upcoming Events</p>
+            <button onClick={() => router.push(`/organizations/${orgId}/events`)} className="text-xs font-bold text-[var(--color-primary-600)] hover:underline">View all →</button>
+          </div>
+          {upcomingEvents.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-[var(--color-neutral-200)] p-4 text-center">
+              <p className="text-sm text-[var(--color-neutral-400)]">No upcoming events.</p>
+              <button onClick={() => router.push(`/organizations/${orgId}/events/create`)} className="mt-2 text-xs font-bold text-[var(--color-primary-600)] hover:underline">Create your first event →</button>
+            </div>
+          ) : (
+            upcomingEvents.map((event: any) => (
+              <EventCard key={event.id} event={event} orgId={orgId} myRole={myRole} />
+            ))
+          )}
         </div>
 
         {/* Team shortcut */}

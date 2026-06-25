@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { StarRating } from './StarRating';
 import { Avatar } from './Avatar';
 import { VerificationBadge } from './VerificationBadge';
+import { StarRating } from './StarRating';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RatingCardProps {
@@ -31,18 +31,19 @@ interface RatingCardProps {
 
 export function RatingCard({ rating }: RatingCardProps) {
   const isWorkerRating = rating.targetType === 'WORKER';
-  const subcats = isWorkerRating
+  const subcats = (isWorkerRating
     ? [
         { label: 'Skill Quality', score: rating.skillQuality },
         { label: 'Communication', score: rating.communication },
         { label: 'Professionalism', score: rating.professionalism },
         { label: 'Punctuality', score: rating.punctuality },
-      ].filter((s) => s.score != null)
+      ]
     : [
         { label: 'Payment Reliability', score: rating.paymentReliability },
         { label: 'Communication', score: rating.communication },
         { label: 'Working Conditions', score: rating.workingConditions },
-      ].filter((s) => s.score != null);
+      ]
+  ).filter((s) => s.score != null) as { label: string; score: number }[];
 
   return (
     <div className="bg-white rounded-2xl border border-[var(--color-neutral-200)] p-4 flex flex-col gap-3">
@@ -69,11 +70,6 @@ export function RatingCard({ rating }: RatingCardProps) {
         </div>
       </div>
 
-      {review => rating.review && (
-        <p className="text-sm text-[var(--color-neutral-700)] leading-relaxed italic">
-          &ldquo;{rating.review}&rdquo;
-        </p>
-      )}
       {rating.review && (
         <p className="text-sm text-[var(--color-neutral-700)] leading-relaxed italic">
           &ldquo;{rating.review}&rdquo;
@@ -88,11 +84,11 @@ export function RatingCard({ rating }: RatingCardProps) {
               <div className="flex-1 h-1.5 rounded-full bg-[var(--color-neutral-100)]">
                 <div
                   className="h-full rounded-full bg-amber-400"
-                  style={{ width: `${((sub.score as number) / 5) * 100}%` }}
+                  style={{ width: `${(sub.score / 5) * 100}%` }}
                 />
               </div>
               <span className="text-[10px] font-bold text-[var(--color-neutral-600)] w-5 text-right">
-                {(sub.score as number).toFixed(1)}
+                {sub.score.toFixed(1)}
               </span>
             </div>
           ))}
