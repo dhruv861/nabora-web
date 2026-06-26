@@ -23,7 +23,7 @@ export default function AttendanceDashboardPage() {
   const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
-  const orgId = params.id as string;
+  const orgId = params.citySlug as string;
   const eventId = params.eventId as string;
 
   const [activeRoleIdx, setActiveRoleIdx] = useState(0);

@@ -14,7 +14,7 @@ export default function OrgDashboardPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuthStore();
-  const orgId = params.id as string;
+  const orgId = params.citySlug as string;
 
   const { data: org, isLoading, error } = useQuery({
     queryKey: ['org', orgId],

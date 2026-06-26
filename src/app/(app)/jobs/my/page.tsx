@@ -138,7 +138,7 @@ export default function MyJobsPage() {
 
                   {/* Counters */}
                   <button
-                    onClick={() => isPublished ? router.push(`/jobs/${job.id}/applicants`) : undefined}
+                    onClick={() => isPublished ? router.push(`/my-jobs/${job.id}/applicants`) : undefined}
                     className={`flex items-center gap-4 bg-[var(--color-neutral-50)] rounded-2xl p-2.5 border border-[var(--color-neutral-150)] text-left w-full ${isPublished ? 'hover:bg-[var(--color-neutral-100)] transition cursor-pointer' : 'cursor-default'}`}
                   >
                     <div className="flex items-center gap-1.5 text-xs text-[var(--color-neutral-600)]">
@@ -189,7 +189,7 @@ export default function MyJobsPage() {
                     {isPublished && (
                       <>
                         <button
-                          onClick={() => router.push(`/jobs/${job.id}/applicants`)}
+                          onClick={() => router.push(`/my-jobs/${job.id}/applicants`)}
                           className="flex-1 py-2 bg-[var(--color-primary-500)] text-white hover:bg-[var(--color-primary-600)] text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5"
                         >
                           <Users size={14} />

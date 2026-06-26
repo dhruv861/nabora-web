@@ -280,7 +280,7 @@ export default function ApplicantsPage() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const jobId = params.id as string;
+  const jobId = params.jobId as string;
   const [activeTab, setActiveTab] = useState(searchParams.get('status') ?? '');
 
   const { data: jobData } = useQuery({

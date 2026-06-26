@@ -16,6 +16,7 @@ interface User {
   averageRating: number;
   city: string | null;
   citySlug: string | null;
+  isAdmin: boolean;
   workerProfile: {
     id: string;
     headline: string | null;
