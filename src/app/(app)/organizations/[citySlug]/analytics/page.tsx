@@ -47,7 +47,7 @@ function StatCard({ label, value, sub, icon }: { label: string; value: string | 
 export default function OrgAnalyticsPage() {
   const router = useRouter();
   const params = useParams();
-  const orgId = params.id as string;
+  const orgId = params.citySlug as string;
 
   const { data: analytics, isLoading, error } = useQuery({
     queryKey: ['org-analytics', orgId],

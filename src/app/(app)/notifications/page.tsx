@@ -28,7 +28,7 @@ const NOTIF_ICONS: Record<string, React.ReactNode> = {
 function getNavTarget(notif: any): string | null {
   const d = notif.data ?? {};
   switch (notif.type) {
-    case 'APPLICATION_RECEIVED':  return d.jobId ? `/jobs/${d.jobId}/applicants` : null;
+    case 'APPLICATION_RECEIVED':  return d.jobId ? `/my-jobs/${d.jobId}/applicants` : null;
     case 'APPLICATION_HIRED':     return d.hireId ? `/hires/${d.hireId}` : null;
     case 'APPLICATION_SHORTLISTED':
     case 'APPLICATION_REJECTED':  return '/applications';

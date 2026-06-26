@@ -25,7 +25,7 @@ export default function OrgEventsPage() {
   const params = useParams();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const orgId = params.id as string;
+  const orgId = params.citySlug as string;
   const [activeTab, setActiveTab] = useState('');
 
   // Get my role in this org

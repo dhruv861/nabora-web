@@ -106,7 +106,7 @@ export default function OrgMembersPage() {
   const params = useParams();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const orgId = params.id as string;
+  const orgId = params.citySlug as string;
   const [showInvite, setShowInvite] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<string | null>(null);
 

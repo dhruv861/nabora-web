@@ -33,7 +33,7 @@ const emptyRole = (): RoleRow => ({ title: '', description: '', vacancies: 1, pa
 export default function CreateEventPage() {
   const router = useRouter();
   const params = useParams();
-  const orgId = params.id as string;
+  const orgId = params.citySlug as string;
 
   const [step, setStep] = useState(1);
   const [eventId, setEventId] = useState<string | null>(null);
